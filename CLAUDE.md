@@ -14,7 +14,8 @@ CLAUDE.md before finishing the task (treat it as part of the change, not optiona
 - bump a platform version (MC, NeoForge, Parchment, Gradle) or change the build flow;
 - change the mod's behavior, scope, or conventions/gotchas.
 
-Keep edits surgical: fix the affected table row / anchor, don't rewrite the whole file.
+Keep edits surgical: fix the affected table row / anchor, don't rewrite the whole file. If a change
+makes an anchor stale, the map is wrong and harmful — fixing it is required, not nice-to-have.
 
 ## Purpose
 
@@ -38,17 +39,19 @@ and the `cycle` truth table.
 
 Two Mixins do the work, both gated by `PartialConfig.enablePartialCraftableFilter`:
 
-- **`RecipeBookComponentMixin`** — the filter integration.
+- **`RecipeBookComponentMixin`** — the filter + ordering integration.
   - `pcr$cycleFilter` `@Redirect`s the `toggleFiltering()` call inside `mouseClicked` so the button
     cycles **All → Craftable → Partial → All** (`PartialFilterState.cycle`). The returned boolean is
     what vanilla feeds to `filterButton.setStateTriggered`, so partial mode shows the button "on".
-  - `pcr$filterPartial` `@Redirect`s the `RecipeBookPage.updateCollections(list, reset)` call inside
-    `updateCollections`. In partial mode it swaps in `pcr$collectPartial(list)` — only collections
-    with a partial recipe (`pcr$bestPartialScore`), sorted `CLOSEST_FIRST` when
-    `sortPartialRecipesByClosest`. In the other two modes the list is forwarded unchanged (vanilla
-    behavior preserved).
+  - `pcr$filterAndSort` `@Redirect`s the `RecipeBookPage.updateCollections(list, reset)` call inside
+    `updateCollections`. In partial mode it first swaps in `pcr$collectPartial(list)` — collections
+    with a craftable/partial recipe (`pcr$bestPartialScore`), sorted `CLOSEST_FIRST` when
+    `sortPartialRecipesByClosest`. Then, in **every** mode, it applies the user's sort/grouping via
+    `pcr$applyView` → `RecipeBookSorter`. With the feature off the list is forwarded unchanged.
   - `pcr$filterName` (`getRecipeFilterName` `@Inject`) → "Partially craftable" toggle tooltip;
-    `pcr$initVisuals` re-asserts the button look on reopen; `pcr$renderMarker` draws the amber marker.
+    `pcr$initVisuals` re-asserts the button look on reopen; `pcr$renderOverlays` draws the amber marker
+    plus the two footer sort/group buttons; `pcr$buttonClick` / `pcr$keyPressed` toggle them and
+    `pcr$onControlChanged` persists + refreshes.
 - **`RecipeButtonMixin`** — per-recipe visuals.
   - `pcr$tint` (`renderWidget` TAIL) draws an amber border when the shown recipe is partial.
   - `pcr$tooltip` (`getTooltipText` RETURN) appends "Partially craftable", the `N/M` progress line,
@@ -74,8 +77,8 @@ craftable recipe is never tinted as partial and vice-versa.
 | Need to work on... | File | Symbol / anchor |
 | --- | --- | --- |
 | **Filter button tri-state cycle** | `src/main/java/com/partiallycraftablerecipes/mixin/RecipeBookComponentMixin.java` | `pcr$cycleFilter` (`@Redirect` of `toggleFiltering()` in `mouseClicked`) |
-| **Which collections show in partial mode + sorting** | same file | `pcr$filterPartial` (`@Redirect` of `RecipeBookPage.updateCollections`), `pcr$collectPartial`, `pcr$bestPartialScore` |
-| **Toggle tooltip / button look / marker** | same file | `pcr$filterName`, `pcr$initVisuals`, `pcr$renderMarker`; `@Shadow` `menu`/`book`/`stackedContents`/`filterButton` |
+| **Which collections show in partial mode** | same file | `pcr$filterAndSort` (`@Redirect` of `RecipeBookPage.updateCollections`), `pcr$collectPartial`, `pcr$bestPartialScore` |
+| **Toggle tooltip / button look / marker** | same file | `pcr$filterName`, `pcr$initVisuals`, `pcr$renderOverlays`; `@Shadow` `menu`/`book`/`stackedContents`/`filterButton`/`searchBox` |
 | **Per-recipe tint + tooltip** | `src/main/java/com/partiallycraftablerecipes/mixin/RecipeButtonMixin.java` | `pcr$tint` (`renderWidget`), `pcr$tooltip` (`getTooltipText`), `pcr$partialScore`, `pcr$partialActive` |
 | **Sort/group buttons + keybinds + ordering** | `RecipeBookComponentMixin.java` | `pcr$filterAndSort` (calls `pcr$applyView`), `pcr$applyView`/`pcr$craftRank`/`pcr$sortName`, `pcr$renderOverlays` (footer buttons), `pcr$buttonClick`, `pcr$keyPressed`, `pcr$onControlChanged`, `pcr$drawButton`/`pcr$inButton`/`pcr$buttonX` |
 | **Sort/group ordering (pure, testable)** | `src/main/java/com/partiallycraftablerecipes/RecipeBookSorter.java` | `sort(entries, mode, group, searchActive)`, `next`, `Entry`, `SortMode` (DEFAULT/ALPHABETICAL) |
@@ -84,15 +87,15 @@ craftable recipe is never tinted as partial and vice-versa.
 | **Rebindable sort keybinds** | `src/main/java/com/partiallycraftablerecipes/PartialKeyBindings.java` | `cycleSort`, `toggleGrouping` (unbound default, `KeyConflictContext.GUI`); registered from the mod ctor |
 | **The tri-state logic (pure, testable)** | `src/main/java/com/partiallycraftablerecipes/PartialFilterState.java` | `cycle`, `modeOf`, `Mode`, `CycleResult`; `isPartial`/`setPartial` (client-side `RecipeBookType` set) |
 | **Ingredient matching (pure, testable)** | `src/main/java/com/partiallycraftablerecipes/RecipePartialMatcher.java` | `match(List<int[]> slots, Map<Integer,Integer> available)` (greedy, most-constrained first) |
-| **Score data + ordering (pure, testable)** | `src/main/java/com/partiallycraftablerecipes/PartialCraftingScore.java` | `satisfiedSlots`/`totalSlots`/`missingSlots`/`fraction`/`isPartial`; `CLOSEST_FIRST` comparator |
+| **Score data + ordering (pure, testable)** | `src/main/java/com/partiallycraftablerecipes/PartialCraftingScore.java` | `satisfiedSlots`/`totalSlots`/`missingSlots`/`fraction`/`isPartial`; `present()`/`missing()` tallies; `CLOSEST_FIRST` comparator |
 | **A missing item (pure)** | `src/main/java/com/partiallycraftablerecipes/MissingIngredient.java` | record `(int itemId, int count)`, `plus` |
 | **MC ↔ matcher bridge** | `src/main/java/com/partiallycraftablerecipes/PartialRecipeAnalyzer.java` | `availabilityOf(StackedContents)`, `score(RecipeHolder, availability)` (skips special/custom/empty-tag, catches all) |
-| Mod entry / lifecycle | `src/main/java/com/partiallycraftablerecipes/PartiallyCraftableRecipes.java` | ctor `(IEventBus, ModContainer)`; `MOD_ID`; `DEBUG`; `LOGGER` |
+| Mod entry / lifecycle | `src/main/java/com/partiallycraftablerecipes/PartiallyCraftableRecipes.java` | ctor `(IEventBus, ModContainer)` registers config + keybinds (`PartialKeyBindings.register`) and calls `PartialUiState.load()`; `MOD_ID`; `DEBUG`; `LOGGER` |
 | Config schema (on-disk spec) | `src/main/java/com/partiallycraftablerecipes/PartialConfig.java` | `SPEC`; `ENABLE_PARTIAL_CRAFTABLE_FILTER`, `SHOW_MISSING_INGREDIENTS_TOOLTIP`, `SORT_PARTIAL_RECIPES_BY_CLOSEST`, `MIN_MATCHED_INGREDIENTS` |
 | Config values read by the Mixins | `PartialConfig.java` | cached `volatile` fields `enablePartialCraftableFilter`, `showMissingIngredientsTooltip`, `sortPartialRecipesByClosest`, `minMatchedIngredients`; populated by `bake()` |
 | Config (re)load wiring | `PartialConfig.java` + `PartiallyCraftableRecipes.java` | `PartialConfig.onConfigEvent`; `modBus.addListener(... ModConfigEvent.Loading / .Reloading ...)` |
 | Register Mixins with the loader | `src/main/resources/partiallycraftablerecipes.mixins.json` | `"client": ["RecipeBookComponentMixin", "RecipeButtonMixin"]`; `"package"` |
-| Tooltip / toggle strings | `src/main/resources/assets/partiallycraftablerecipes/lang/en_us.json` | `gui.partiallycraftablerecipes.{toggle.partial,partially_craftable,progress,missing}` |
+| Tooltip / toggle / keybind strings | `src/main/resources/assets/partiallycraftablerecipes/lang/en_us.json` | `gui.partiallycraftablerecipes.{toggle.partial,partially_craftable,progress,present,missing,sort.*,group.*}`; `key.categories.partiallycraftablerecipes`; `key.partiallycraftablerecipes.{cycle_sort,toggle_grouping}` |
 | Mod metadata (loaded by NeoForge) | `src/main/templates/META-INF/neoforge.mods.toml` | `displayName`/`authors`/`license`/`version` (all `${...}` from `gradle.properties`); `[[mixins]]`; `side = "CLIENT"` |
 | Resource-pack stub | `src/main/resources/pack.mcmeta` | `pack_format` (34 for 1.21.1) |
 
@@ -155,9 +158,12 @@ Gradle sync.
   craftable recipe is never shown as partial. Mirror any rule change across both Mixins.
 - **Conservative on weird recipes.** `PartialRecipeAnalyzer.score` returns `null` (→ skipped) for
   special/custom/empty-tag recipes and catches everything, so the book never crashes.
-- **Don't break the other modes.** `pcr$filterPartial` only transforms the list in partial mode; "all"
-  and "craftable" pass through untouched. Keep it that way.
-- **Behavior is unverified in-game.** Unit tests cover the pure logic only; the mixin wiring still
-  needs the manual pass in `README.md`. Don't claim in-game verification until then.
+- **Don't break the other modes.** `pcr$filterAndSort` only *filters* in partial mode; "all" and
+  "craftable" pass through the filter step untouched. Sort/grouping (`pcr$applyView`) may reorder any
+  mode but never adds/removes collections. Keep both properties.
+- **In-game verification status.** The partial filter + tooltips are verified in-game (a missing
+  `@Shadow`/`extends` crash was caught and fixed this way → 1.0.1). The 1.1.0 sort/group footer buttons
+  and keybinds still need a manual in-game pass (see the README checklist) — especially button
+  placement, which is hand-positioned pixels relative to the filter button.
 - **Build = format + compile + test, one command.** `.\gradlew.bat build` (needs JDK 21) auto-runs
   `spotlessApply`, compiles, runs the JUnit suite, and jars → `build/libs/partiallycraftablerecipes-<version>.jar`.
