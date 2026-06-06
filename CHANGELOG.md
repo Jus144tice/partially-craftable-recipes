@@ -4,6 +4,15 @@ All notable changes to Partially Craftable Recipes are documented here.
 
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.1] - 2026-06-06
+
+### Fixed
+
+- Crash on opening any crafting screen: `RecipeButtonMixin` tried to `@Shadow` `getX()`/`getY()`, which
+  `RecipeButton` only inherits from `AbstractWidget` rather than declaring itself, so mixin application
+  failed (`InvalidMixinException`). The mixin now `extends AbstractWidget` and calls those inherited
+  methods directly. First in-game-verified build.
+
 ## [1.0.0] - 2026-06-06
 
 ### Added

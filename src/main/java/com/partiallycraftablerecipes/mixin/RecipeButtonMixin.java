@@ -10,6 +10,7 @@ import java.util.Map;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.recipebook.RecipeButton;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
 import net.minecraft.network.chat.Component;
@@ -37,7 +38,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * slots covered by the inventory.
  */
 @Mixin(RecipeButton.class)
-public abstract class RecipeButtonMixin {
+public abstract class RecipeButtonMixin extends AbstractWidget {
+
+    // RecipeButton extends AbstractWidget, so we declare the mixin as extending it too in order to
+    // call the inherited getX()/getY() directly (you cannot @Shadow a method that is only inherited by
+    // the target, not declared on it). This constructor exists solely to satisfy javac — Mixin does
+    // not copy mixin constructors into the target class, so it is never actually invoked.
+    private RecipeButtonMixin() {
+        super(0, 0, 0, 0, Component.empty());
+    }
 
     @Shadow
     private RecipeCollection collection;
@@ -47,13 +56,6 @@ public abstract class RecipeButtonMixin {
 
     @Shadow
     public abstract RecipeHolder<?> getRecipe();
-
-    // Inherited from AbstractWidget (RecipeButton's superclass); shadowed so we can position the tint.
-    @Shadow
-    public abstract int getX();
-
-    @Shadow
-    public abstract int getY();
 
     /** Tint the button when it is showing a partially-craftable recipe. */
     @Inject(method = "renderWidget", at = @At("TAIL"))

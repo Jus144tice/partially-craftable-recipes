@@ -121,6 +121,11 @@ Gradle sync.
 ## Conventions / gotchas
 
 - **Client-only.** `@Mod(dist = Dist.CLIENT)`; both Mixins are in the `client` list. No server code.
+- **Shadowing inherited members needs `extends`.** `RecipeButtonMixin` uses `getX()`/`getY()`, which
+  `RecipeButton` only inherits from `AbstractWidget`. You cannot `@Shadow` a method the target merely
+  inherits — the mixin must `extends AbstractWidget` and call them directly (with a dummy constructor
+  that Mixin discards). Doing it via `@Shadow` crashes at apply time with `InvalidMixinException`
+  (this was the 1.0.0 → 1.0.1 fix).
 - **No refmap.** Dev and production both run Mojmaps, so `mixins.json` omits a refmap. Mixin member
   names/descriptors must match Mojmaps exactly.
 - **Read-only.** Nothing consumes/moves items — only availability is read — so the partial check can
