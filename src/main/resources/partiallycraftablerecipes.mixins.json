@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.partiallycraftablerecipes.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "RecipeBookComponentMixin",
+    "RecipeButtonMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

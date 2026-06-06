@@ -1,0 +1,6 @@
+{
+  "gui.partiallycraftablerecipes.toggle.partial": "Showing partially craftable",
+  "gui.partiallycraftablerecipes.partially_craftable": "Partially craftable",
+  "gui.partiallycraftablerecipes.progress": "%1$s/%2$s ingredients available",
+  "gui.partiallycraftablerecipes.missing": "Missing:"
+}

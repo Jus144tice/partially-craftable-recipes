@@ -1,0 +1,42 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/Jus144tice/partially-craftable-recipes/issues"
+
+[[mods]]
+modId = "partiallycraftablerecipes"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+displayURL = "https://github.com/Jus144tice/partially-craftable-recipes"
+description = '''
+Client-side quality-of-life mod that adds a third "partially craftable" filter to the
+vanilla recipe book, alongside the stock "all" and "craftable only" modes.
+
+  * Cycle the recipe-book filter button: All -> Craftable -> Partially craftable.
+  * Partially craftable = you have at least one required ingredient but not enough to craft.
+  * Partial recipes are tinted and their tooltip lists the ingredients you are missing.
+  * In partial mode recipes are sorted closest-to-craftable first.
+
+Client-only. Does not need to be installed on the server and works on vanilla servers.
+'''
+
+# --- Mixins -----------------------------------------------------------------
+# Client-only Mixins that extend the vanilla recipe-book filtering / rendering.
+[[mixins]]
+config = "partiallycraftablerecipes.mixins.json"
+
+# --- Dependencies -----------------------------------------------------------
+[[dependencies.partiallycraftablerecipes]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.partiallycraftablerecipes]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "CLIENT"
