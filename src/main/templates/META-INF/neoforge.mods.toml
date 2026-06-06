@@ -8,6 +8,7 @@ modId = "partiallycraftablerecipes"
 version = "${mod_version}"
 displayName = "${mod_name}"
 authors = "${mod_authors}"
+logoFile = "partiallycraftablerecipes.png"
 displayURL = "https://github.com/Jus144tice/partially-craftable-recipes"
 description = '''
 Client-side quality-of-life mod that adds a third "partially craftable" filter to the

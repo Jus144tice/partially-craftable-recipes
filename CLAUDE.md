@@ -96,7 +96,8 @@ craftable recipe is never tinted as partial and vice-versa.
 | Config (re)load wiring | `PartialConfig.java` + `PartiallyCraftableRecipes.java` | `PartialConfig.onConfigEvent`; `modBus.addListener(... ModConfigEvent.Loading / .Reloading ...)` |
 | Register Mixins with the loader | `src/main/resources/partiallycraftablerecipes.mixins.json` | `"client": ["RecipeBookComponentMixin", "RecipeButtonMixin"]`; `"package"` |
 | Tooltip / toggle / keybind strings | `src/main/resources/assets/partiallycraftablerecipes/lang/en_us.json` | `gui.partiallycraftablerecipes.{toggle.partial,partially_craftable,progress,present,missing,sort.*,group.*}`; `key.categories.partiallycraftablerecipes`; `key.partiallycraftablerecipes.{cycle_sort,toggle_grouping}` |
-| Mod metadata (loaded by NeoForge) | `src/main/templates/META-INF/neoforge.mods.toml` | `displayName`/`authors`/`license`/`version` (all `${...}` from `gradle.properties`); `[[mixins]]`; `side = "CLIENT"` |
+| Mod metadata (loaded by NeoForge) | `src/main/templates/META-INF/neoforge.mods.toml` | `displayName`/`authors`/`license`/`version` (all `${...}` from `gradle.properties`); `logoFile`; `[[mixins]]`; `side = "CLIENT"` |
+| Mod icon (shown in mod lists) | `src/main/resources/partiallycraftablerecipes.png` | referenced by `logoFile` in the toml; regenerate via `tools/make_icon.py` (needs Python+Pillow; sibling-family 2x2 grid: two emerald "have" cells + two ghosted "missing" cells) |
 | Resource-pack stub | `src/main/resources/pack.mcmeta` | `pack_format` (34 for 1.21.1) |
 
 ## Tests
