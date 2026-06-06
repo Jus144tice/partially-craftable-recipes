@@ -24,6 +24,11 @@ when the player has at least `minMatchedIngredients` of its ingredient slots but
 craft it. Partial recipes are tinted, get a missing-ingredients tooltip, and are sorted
 closest-to-craftable first. No server install; works on vanilla servers; never moves/consumes items.
 
+It also adds ordering controls applied to **every** filter mode — a sort toggle (default / alphabetical
+by output name) and a craftability grouping toggle (craftable → partial → uncraftable) — exposed as two
+footer buttons and two rebindable keybinds, with the sort + grouping + filter state remembered across
+sessions.
+
 ## How the feature works (read before touching the Mixins)
 
 Vanilla stores **one boolean per book type** ("filtering" = craftable-only). The mod layers a third
@@ -72,6 +77,11 @@ craftable recipe is never tinted as partial and vice-versa.
 | **Which collections show in partial mode + sorting** | same file | `pcr$filterPartial` (`@Redirect` of `RecipeBookPage.updateCollections`), `pcr$collectPartial`, `pcr$bestPartialScore` |
 | **Toggle tooltip / button look / marker** | same file | `pcr$filterName`, `pcr$initVisuals`, `pcr$renderMarker`; `@Shadow` `menu`/`book`/`stackedContents`/`filterButton` |
 | **Per-recipe tint + tooltip** | `src/main/java/com/partiallycraftablerecipes/mixin/RecipeButtonMixin.java` | `pcr$tint` (`renderWidget`), `pcr$tooltip` (`getTooltipText`), `pcr$partialScore`, `pcr$partialActive` |
+| **Sort/group buttons + keybinds + ordering** | `RecipeBookComponentMixin.java` | `pcr$filterAndSort` (calls `pcr$applyView`), `pcr$applyView`/`pcr$craftRank`/`pcr$sortName`, `pcr$renderOverlays` (footer buttons), `pcr$buttonClick`, `pcr$keyPressed`, `pcr$onControlChanged`, `pcr$drawButton`/`pcr$inButton`/`pcr$buttonX` |
+| **Sort/group ordering (pure, testable)** | `src/main/java/com/partiallycraftablerecipes/RecipeBookSorter.java` | `sort(entries, mode, group, searchActive)`, `next`, `Entry`, `SortMode` (DEFAULT/ALPHABETICAL) |
+| **Live sort/group state** | `PartialFilterState.java` | `sortMode`, `groupByCraftability`, `cycleSort()`, `toggleGroupByCraftability()`, `partialTypes()` |
+| **Remember view across sessions** | `src/main/java/com/partiallycraftablerecipes/PartialUiState.java` | `load()` / `save()` ↔ `config/partiallycraftablerecipes-view.properties` (sort, grouping, partial book types) |
+| **Rebindable sort keybinds** | `src/main/java/com/partiallycraftablerecipes/PartialKeyBindings.java` | `cycleSort`, `toggleGrouping` (unbound default, `KeyConflictContext.GUI`); registered from the mod ctor |
 | **The tri-state logic (pure, testable)** | `src/main/java/com/partiallycraftablerecipes/PartialFilterState.java` | `cycle`, `modeOf`, `Mode`, `CycleResult`; `isPartial`/`setPartial` (client-side `RecipeBookType` set) |
 | **Ingredient matching (pure, testable)** | `src/main/java/com/partiallycraftablerecipes/RecipePartialMatcher.java` | `match(List<int[]> slots, Map<Integer,Integer> available)` (greedy, most-constrained first) |
 | **Score data + ordering (pure, testable)** | `src/main/java/com/partiallycraftablerecipes/PartialCraftingScore.java` | `satisfiedSlots`/`totalSlots`/`missingSlots`/`fraction`/`isPartial`; `CLOSEST_FIRST` comparator |
@@ -97,6 +107,7 @@ Run with `.\gradlew.bat test`.
 | Matcher tests (cake example, counts, tags, no-mutation) | `src/test/java/com/partiallycraftablerecipes/RecipePartialMatcherTest.java` | `CakeExample`, `CountsAndDuplicates`, `TagsAndAlternatives`, `doesNotConsumeCallersMap` |
 | Score / ordering tests | `src/test/java/com/partiallycraftablerecipes/PartialCraftingScoreTest.java` | `isPartial_respectsMinMatchedAndNotFull`, `closestFirst_ordersBySatisfiedThenMissing` |
 | Tri-state cycle tests | `src/test/java/com/partiallycraftablerecipes/PartialFilterStateTest.java` | `FeatureEnabled`, `FeatureDisabled`, `ModeResolution` |
+| Sort/group ordering tests | `src/test/java/com/partiallycraftablerecipes/RecipeBookSorterTest.java` | `alphabetical_*`, `group_*`, `groupAndAlphabetical_*`, `next_*` |
 | Config schema/defaults tests | `src/test/java/com/partiallycraftablerecipes/PartialConfigTest.java` | `valuePaths`, `specDefaults`, `cachedDefaultsMirrorSpec` |
 | Test harness + JUnit deps | `build.gradle` | `neoForge { unitTest { enable(); testedMod } }`; `testImplementation`/`testRuntimeOnly`; `tasks.named('test')` |
 

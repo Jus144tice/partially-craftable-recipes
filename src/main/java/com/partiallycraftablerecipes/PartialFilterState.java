@@ -41,6 +41,15 @@ public final class PartialFilterState {
 
     private static final Set<RecipeBookType> PARTIAL_TYPES = EnumSet.noneOf(RecipeBookType.class);
 
+    /**
+     * Display ordering controls, applied to every filter mode. These are remembered across sessions by
+     * {@link PartialUiState}; the buttons / keybinds in the recipe book mutate them via
+     * {@link #cycleSort()} / {@link #toggleGroupByCraftability()}.
+     */
+    public static volatile RecipeBookSorter.SortMode sortMode = RecipeBookSorter.SortMode.DEFAULT;
+
+    public static volatile boolean groupByCraftability = false;
+
     public static boolean isPartial(RecipeBookType type) {
         return PARTIAL_TYPES.contains(type);
     }
@@ -51,6 +60,21 @@ public final class PartialFilterState {
         } else {
             PARTIAL_TYPES.remove(type);
         }
+    }
+
+    /** Read-only view of the book types currently in partial mode (used by {@link PartialUiState}). */
+    public static Set<RecipeBookType> partialTypes() {
+        return java.util.Collections.unmodifiableSet(PARTIAL_TYPES);
+    }
+
+    /** Advance the sort mode (DEFAULT &harr; ALPHABETICAL). */
+    public static void cycleSort() {
+        sortMode = RecipeBookSorter.next(sortMode);
+    }
+
+    /** Toggle craftability grouping on/off. */
+    public static void toggleGroupByCraftability() {
+        groupByCraftability = !groupByCraftability;
     }
 
     /** Resolve the current {@link Mode} from vanilla's filtering flag and our partial bookkeeping. */

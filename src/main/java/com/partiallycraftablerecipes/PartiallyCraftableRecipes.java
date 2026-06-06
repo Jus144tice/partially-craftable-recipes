@@ -7,6 +7,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import org.slf4j.Logger;
 
 /**
@@ -37,6 +38,12 @@ public final class PartiallyCraftableRecipes {
         // subtypes. Each fires once the config file is read so we can cache its values.
         modBus.addListener((ModConfigEvent.Loading event) -> PartialConfig.onConfigEvent(event));
         modBus.addListener((ModConfigEvent.Reloading event) -> PartialConfig.onConfigEvent(event));
+
+        // Rebindable sort keybinds, registered on the mod event bus.
+        modBus.addListener((RegisterKeyMappingsEvent event) -> PartialKeyBindings.register(event));
+
+        // Restore the remembered recipe-book view state (sort mode, grouping, partial mode).
+        PartialUiState.load();
 
         LOGGER.info("Partially Craftable Recipes loaded (client-only).");
     }

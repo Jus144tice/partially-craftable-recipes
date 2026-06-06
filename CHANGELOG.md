@@ -4,6 +4,21 @@ All notable changes to Partially Craftable Recipes are documented here.
 
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.0] - 2026-06-06
+
+### Added
+
+- **Sort controls for every filter mode**, with two small buttons in the recipe-book footer plus two
+  rebindable keybinds (Options → Controls, unbound by default):
+  - **Sort** (`#` / `A`): Default order ↔ Alphabetical by output item name. Alphabetical is
+    suppressed while a search is active so search results keep vanilla ordering.
+  - **Group** (`G`): toggle grouping by craftability — craftable first, then partial, then the rest —
+    with the chosen sort applied within each group.
+- **Persistence**: the sort mode, grouping toggle, and partial-filter state are remembered across
+  sessions in `config/partiallycraftablerecipes-view.properties`, so reopening the crafting table
+  restores your last view.
+- Pure `RecipeBookSorter` (with `SortMode`) plus tests for the ordering/grouping logic.
+
 ## [1.0.2] - 2026-06-06
 
 ### Changed

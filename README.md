@@ -29,6 +29,22 @@ useful middle ground — recipes you can *almost* make — without replacing the
 Recipes you have *no* ingredients for don't appear in the partial filter. The vanilla "all" and
 "craftable" modes are completely unchanged.
 
+## Sorting & grouping
+
+Two small buttons in the recipe-book footer (bottom-right) control ordering in **every** filter mode:
+
+- **Sort** (`#` → default, `A` → alphabetical): toggle between the game's default order and A-Z by
+  output item name. Alphabetical is automatically suppressed while you're typing a search, so search
+  results keep their normal order.
+- **Group** (`G`, green when on): toggle grouping by craftability — **craftable first, then partial,
+  then the rest** — with your chosen sort applied within each group.
+
+The same two actions are also available as **rebindable keybinds** (Options → Controls →
+"Partially Craftable Recipes"), unbound by default so they never clash with your other mods.
+
+Your sort mode, grouping toggle, and filter mode are **remembered across sessions** (saved to
+`config/partiallycraftablerecipes-view.properties`), so the crafting table reopens the way you left it.
+
 ## How it handles tricky recipes
 
 - **Shaped and shapeless** crafting recipes are both supported.
