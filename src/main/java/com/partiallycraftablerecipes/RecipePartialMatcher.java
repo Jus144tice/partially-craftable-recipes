@@ -62,6 +62,7 @@ public final class RecipePartialMatcher {
                 (a, b) -> Integer.compare(availableOptions(slots.get(a), pool), availableOptions(slots.get(b), pool)));
 
         boolean[] satisfied = new boolean[total];
+        int[] usedId = new int[total]; // which item id actually covered each satisfied slot
         int satisfiedCount = 0;
         for (int idx : order) {
             for (int id : slots.get(idx)) {
@@ -69,26 +70,34 @@ public final class RecipePartialMatcher {
                 if (have != null && have > 0) {
                     pool.put(id, have - 1);
                     satisfied[idx] = true;
+                    usedId[idx] = id;
                     satisfiedCount++;
                     break;
                 }
             }
         }
 
-        // Build the missing list in original slot order, grouped by the slot's representative item.
-        Map<Integer, MissingIngredient> grouped = new LinkedHashMap<>();
+        // Walk slots in original order, grouping satisfied slots into the "present" list (by the item
+        // that covered them) and unsatisfied slots into the "missing" list (by the slot's first
+        // accepted item, used as a representative).
+        Map<Integer, MissingIngredient> present = new LinkedHashMap<>();
+        Map<Integer, MissingIngredient> missing = new LinkedHashMap<>();
         for (int i = 0; i < total; i++) {
-            if (!satisfied[i]) {
+            if (satisfied[i]) {
+                tally(present, usedId[i]);
+            } else {
                 int[] slot = slots.get(i);
-                int representative = slot.length > 0 ? slot[0] : 0;
-                grouped.merge(
-                        representative,
-                        new MissingIngredient(representative, 1),
-                        (existing, add) -> existing.plus(add.count()));
+                tally(missing, slot.length > 0 ? slot[0] : 0);
             }
         }
 
-        return new PartialCraftingScore(total, satisfiedCount, new ArrayList<>(grouped.values()));
+        return new PartialCraftingScore(
+                total, satisfiedCount, new ArrayList<>(missing.values()), new ArrayList<>(present.values()));
+    }
+
+    /** Add one of {@code itemId} to a (itemId &rarr; tally) map, accumulating counts. */
+    private static void tally(Map<Integer, MissingIngredient> into, int itemId) {
+        into.merge(itemId, new MissingIngredient(itemId, 1), (existing, add) -> existing.plus(add.count()));
     }
 
     /** How many of {@code slot}'s accepted ids are currently present (count &gt; 0) in {@code pool}. */

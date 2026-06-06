@@ -34,14 +34,22 @@ public final class PartialCraftingScore {
     private final int totalSlots;
     private final int satisfiedSlots;
     private final List<MissingIngredient> missing;
+    private final List<MissingIngredient> present;
 
+    /** Convenience constructor for scores without a present breakdown (e.g. tests). */
     public PartialCraftingScore(int totalSlots, int satisfiedSlots, List<MissingIngredient> missing) {
+        this(totalSlots, satisfiedSlots, missing, List.of());
+    }
+
+    public PartialCraftingScore(
+            int totalSlots, int satisfiedSlots, List<MissingIngredient> missing, List<MissingIngredient> present) {
         if (totalSlots < 0 || satisfiedSlots < 0 || satisfiedSlots > totalSlots) {
             throw new IllegalArgumentException("invalid score: satisfied=" + satisfiedSlots + " total=" + totalSlots);
         }
         this.totalSlots = totalSlots;
         this.satisfiedSlots = satisfiedSlots;
         this.missing = List.copyOf(missing);
+        this.present = List.copyOf(present);
     }
 
     public int totalSlots() {
@@ -60,6 +68,14 @@ public final class PartialCraftingScore {
     /** The missing items, grouped by item with their required counts. Never null; may be empty. */
     public List<MissingIngredient> missing() {
         return this.missing;
+    }
+
+    /**
+     * The items the player already has that cover satisfied slots, grouped by the item that covered
+     * them with how many slots it filled. Never null; may be empty.
+     */
+    public List<MissingIngredient> present() {
+        return this.present;
     }
 
     /** Fraction of slots covered, in {@code [0,1]} — drives the "2/4 ingredients available" text. */

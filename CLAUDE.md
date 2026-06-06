@@ -49,11 +49,20 @@ Two Mixins do the work, both gated by `PartialConfig.enablePartialCraftableFilte
   - `pcr$tooltip` (`getTooltipText` RETURN) appends "Partially craftable", the `N/M` progress line,
     and the missing list. Both call `pcr$partialScore` / `pcr$partialActive`.
 
-**Partial decision (authoritative).** A recipe counts as partial iff it is **not** fully craftable per
-the game's own check (`RecipeCollection#isCraftable` / vanilla `StackedContents#canCraft`) **and**
-`RecipePartialMatcher` reports `satisfiedSlots >= minMatchedIngredients`. The matcher is only a
-*closeness* heuristic (greedy, most-constrained-slot first); it never overrides vanilla's
-craftability, so a craftable recipe can never be shown as partial and vice-versa.
+**Two distinct decisions.**
+
+1. *Which recipes the partial filter lists* (`pcr$bestPartialScore`): the filter is a **superset** of
+   craftable — **craftable ⊆ partial ⊆ all**. A recipe is listed if it fits + is known and either is
+   fully craftable per the game's own check (`RecipeCollection#isCraftable`) **or**
+   `RecipePartialMatcher` reports `satisfiedSlots >= minMatchedIngredients`. Fully craftable recipes
+   score all-slots-satisfied, so they sort to the top.
+2. *Which recipes get the amber tint / "Partially craftable" tooltip* (`RecipeButtonMixin.pcr$partialScore`):
+   only genuinely partial ones — i.e. **not** fully craftable (`isCraftable` returns false) and
+   `satisfiedSlots >= minMatchedIngredients`. Fully craftable recipes keep their vanilla look.
+
+The matcher is only a *closeness* heuristic (greedy, most-constrained-slot first) that also reports the
+`present` and `missing` item tallies for the tooltip; it never overrides vanilla's craftability, so a
+craftable recipe is never tinted as partial and vice-versa.
 
 ## Feature → file/symbol map
 

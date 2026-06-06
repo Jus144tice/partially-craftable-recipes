@@ -45,6 +45,15 @@ class RecipePartialMatcherTest {
         }
 
         @Test
+        void reportsPresentItemsToo() {
+            PartialCraftingScore score = RecipePartialMatcher.match(recipe, Map.of(WHEAT, 5, SUGAR, 5));
+            // present should list the wheat and sugar the player actually has, one slot each
+            assertEquals(2, score.present().size());
+            assertTrue(score.present().stream().anyMatch(m -> m.itemId() == WHEAT && m.count() == 1));
+            assertTrue(score.present().stream().anyMatch(m -> m.itemId() == SUGAR && m.count() == 1));
+        }
+
+        @Test
         void hasEverything_isFullyMatchedNotPartial() {
             PartialCraftingScore score =
                     RecipePartialMatcher.match(recipe, Map.of(WHEAT, 1, EGG, 1, MILK, 1, SUGAR, 1));

@@ -4,6 +4,20 @@ All notable changes to Partially Craftable Recipes are documented here.
 
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.2] - 2026-06-06
+
+### Changed
+
+- The partial filter is now a strict superset of craftable: **craftable ⊆ partially craftable ⊆ all**.
+  Partial mode now also lists recipes you can fully craft (sorted to the top as all-slots-satisfied),
+  instead of hiding them. Fully craftable recipes still render with the vanilla craftable look — only
+  genuinely partial recipes get the amber border / "Partially craftable" tooltip.
+
+### Added
+
+- The partial-recipe tooltip now shows a green **Have:** list (ingredients you already have) in
+  addition to the red **Missing:** list. Both are gated by `showMissingIngredientsTooltip`.
+
 ## [1.0.1] - 2026-06-06
 
 ### Fixed

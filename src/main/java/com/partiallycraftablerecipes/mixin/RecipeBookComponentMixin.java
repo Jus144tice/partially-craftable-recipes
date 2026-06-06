@@ -40,9 +40,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *   <li><b>{@code toggleFiltering()}</b> — redirected so the filter button cycles
  *       All &rarr; Craftable &rarr; Partial &rarr; All instead of toggling two states.
  *   <li><b>{@code RecipeBookPage.updateCollections(list, reset)}</b> — redirected so that, in partial
- *       mode, the displayed collections are filtered to those holding a partially-craftable recipe and
- *       sorted closest-to-craftable first. (In the other two modes the list is passed through
- *       untouched, so vanilla "all" / "craftable" filtering is unchanged.)
+ *       mode, the displayed collections are filtered to those holding a craftable <em>or</em>
+ *       partially-craftable recipe and sorted closest-to-craftable first. Partial mode is a superset
+ *       of craftable (craftable &sub; partial &sub; all). (In the other two modes the list is passed
+ *       through untouched, so vanilla "all" / "craftable" filtering is unchanged.)
  *   <li><b>{@code getRecipeFilterName()}</b> — returns the "Partially craftable" toggle tooltip when
  *       partial mode is active.
  *   <li><b>{@code initVisuals()} / {@code render()}</b> — keep the filter button shown as "on" and draw
@@ -185,27 +186,31 @@ public abstract class RecipeBookComponentMixin {
     }
 
     /**
-     * The best (closest-to-craftable) partial score among a collection's recipes, or {@code null} if
-     * none qualify. A recipe qualifies when it fits the grid and is known (vanilla already restricts
-     * {@code getRecipes(false)} to those), is <em>not</em> fully craftable per the game's own check,
-     * and has at least {@code minMatched} ingredient slots the inventory can cover.
+     * The best (closest-to-craftable) score among a collection's recipes, or {@code null} if none
+     * qualify for the partial filter. The partial filter is a <em>superset</em> of craftable
+     * (craftable &sub; partial &sub; all), so a recipe qualifies when it fits the grid and is known
+     * (vanilla restricts {@code getRecipes(false)} to those) and either is fully craftable per the
+     * game's own check <em>or</em> has at least {@code minMatched} ingredient slots the inventory can
+     * cover. Fully craftable recipes score all-slots-satisfied, so they sort to the top.
      */
     private PartialCraftingScore pcr$bestPartialScore(
             RecipeCollection collection, Map<Integer, Integer> availability, int minMatched) {
-        List<RecipeHolder<?>> fitting = collection.getRecipes(false); // fits dimensions + known
+        List<RecipeHolder<?>> fitting = collection.getRecipes(false); // fits dimensions + known (incl. craftable)
         if (fitting.isEmpty()) {
             return null;
         }
-        Set<RecipeHolder<?>> craftable = new HashSet<>(collection.getRecipes(true)); // fully craftable
+        Set<RecipeHolder<?>> craftable = new HashSet<>(collection.getRecipes(true)); // fully craftable subset
         int min = Math.max(1, minMatched);
 
         PartialCraftingScore best = null;
         for (RecipeHolder<?> recipe : fitting) {
-            if (craftable.contains(recipe)) {
-                continue; // fully craftable -> never partial
-            }
             PartialCraftingScore score = PartialRecipeAnalyzer.score(recipe, availability);
-            if (score == null || score.satisfiedSlots() < min) {
+            if (score == null) {
+                continue;
+            }
+            // Always keep fully craftable recipes (subset rule); keep the rest once they reach the
+            // matched-ingredient minimum.
+            if (!craftable.contains(recipe) && score.satisfiedSlots() < min) {
                 continue;
             }
             if (best == null || PartialCraftingScore.CLOSEST_FIRST.compare(score, best) < 0) {

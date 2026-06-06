@@ -79,7 +79,10 @@ public abstract class RecipeButtonMixin extends AbstractWidget {
         graphics.pose().popPose();
     }
 
-    /** Append "Partially craftable", a progress line, and the missing-ingredient list to the tooltip. */
+    /**
+     * Append "Partially craftable", a progress line, and the present ("Have") and missing
+     * ingredient lists to the tooltip.
+     */
     @Inject(method = "getTooltipText", at = @At("RETURN"))
     private void pcr$tooltip(CallbackInfoReturnable<List<Component>> cir) {
         if (!pcr$partialActive()) {
@@ -96,20 +99,28 @@ public abstract class RecipeButtonMixin extends AbstractWidget {
             lines.add(Component.translatable(
                             "gui.partiallycraftablerecipes.progress", score.satisfiedSlots(), score.totalSlots())
                     .withStyle(ChatFormatting.GRAY));
-            if (!score.missing().isEmpty()) {
-                lines.add(Component.translatable("gui.partiallycraftablerecipes.missing")
-                        .withStyle(ChatFormatting.GRAY));
-                for (MissingIngredient missing : score.missing()) {
-                    ItemStack stack = StackedContents.fromStackingIndex(missing.itemId());
-                    if (stack.isEmpty()) {
-                        continue;
-                    }
-                    lines.add(Component.literal(" - ")
-                            .append(stack.getHoverName())
-                            .append(Component.literal(" x" + missing.count()))
-                            .withStyle(ChatFormatting.RED));
-                }
+            pcr$appendItemList(lines, "gui.partiallycraftablerecipes.present", score.present(), ChatFormatting.GREEN);
+            pcr$appendItemList(lines, "gui.partiallycraftablerecipes.missing", score.missing(), ChatFormatting.RED);
+        }
+    }
+
+    /** Add a "{header}" line followed by one " - Name xN" line per item, in the given color. */
+    @Unique
+    private void pcr$appendItemList(
+            List<Component> lines, String headerKey, List<MissingIngredient> items, ChatFormatting color) {
+        if (items.isEmpty()) {
+            return;
+        }
+        lines.add(Component.translatable(headerKey).withStyle(ChatFormatting.GRAY));
+        for (MissingIngredient item : items) {
+            ItemStack stack = StackedContents.fromStackingIndex(item.itemId());
+            if (stack.isEmpty()) {
+                continue;
             }
+            lines.add(Component.literal(" - ")
+                    .append(stack.getHoverName())
+                    .append(Component.literal(" x" + item.count()))
+                    .withStyle(color));
         }
     }
 

@@ -14,15 +14,20 @@ useful middle ground — recipes you can *almost* make — without replacing the
   3. **Partially craftable** (new)
 - A recipe is **partially craftable** when you have **at least one** required ingredient but **not
   enough to fully craft it**. (Configurable minimum; default: at least one matching ingredient.)
+- The three modes are **nested**: **craftable ⊆ partially craftable ⊆ all**. Partial mode shows
+  everything you have at least some ingredients for — including recipes you can fully craft (they sort
+  to the top). Only genuinely partial recipes get the special treatment below; fully craftable ones
+  keep their normal vanilla look.
 - Partial recipes get a **distinct amber border**, and their tooltip shows:
   - **Partially craftable**
   - **2/4 ingredients available** (progress)
-  - **Missing:** a list of the items you still need, e.g. `- Egg x1`, `- Milk Bucket x1`
+  - **Have:** the ingredients you already have, e.g. `- Wheat x1`, `- Sugar x1`
+  - **Missing:** the items you still need, e.g. `- Egg x1`, `- Milk Bucket x1`
 - In partial mode, recipes are **sorted closest-to-craftable first** (most ingredients satisfied
   first; ties broken by fewest missing).
 
-Fully craftable recipes never show up in the partial filter, and recipes you have *no* ingredients
-for don't either. The vanilla "all" and "craftable" modes are completely unchanged.
+Recipes you have *no* ingredients for don't appear in the partial filter. The vanilla "all" and
+"craftable" modes are completely unchanged.
 
 ## How it handles tricky recipes
 

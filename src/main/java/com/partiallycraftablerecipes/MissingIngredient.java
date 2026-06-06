@@ -1,8 +1,10 @@
 package com.partiallycraftablerecipes;
 
 /**
- * One ingredient the player is missing for a recipe, expressed purely as a stacking item id and a
- * count. "Stacking id" is the integer the game uses to bucket items in {@code StackedContents}
+ * A simple (item, count) tally expressed purely as a stacking item id and a count. Its primary use is
+ * the <em>missing</em> ingredient list (hence the name), but {@link PartialCraftingScore} reuses the
+ * same shape for the <em>present</em> list — the items the player already has that cover satisfied
+ * slots. "Stacking id" is the integer the game uses to bucket items in {@code StackedContents}
  * ({@code BuiltInRegistries.ITEM.getId(item)}); keeping the type primitive here is what lets the
  * matching logic stay free of Minecraft classes and therefore unit-testable.
  *
